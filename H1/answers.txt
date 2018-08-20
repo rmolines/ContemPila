@@ -1,0 +1,12 @@
+1. Nosso compilador atualmente é de uma única passagem,
+pois uma vez que ele lê um token, ele nunca o lerá de novo.
+
+2. O resultado da multiplicação está errado, pois
+o compilador não leva em consideração a ordem em que
+as operações devem ser feitas.
+
+
+3. Para consertar o diagrama, basta que antes de realizar
+de fato a soma, verifique-se se o próximo operador é
+de multiplicação ou de divisão. Caso não for, aí sim
+realizar a soma ou subtração. 
