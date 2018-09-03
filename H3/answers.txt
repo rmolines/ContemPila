@@ -1,0 +1,14 @@
+1. A diferença entre os termos é a posição onde o operador tem que estar em relação aos termos. Com infix, o operador
+estaria no meio, assim como é utilizado na nossa matemática, 2*2. Com prefix isso seria *22 e com postfix seria 22*.
+
+2. 
+
+enquanto lista tiver nodes
+    node = node raiz
+    se node tiver filho na esquerda
+        node = filho na esquerda
+    senao se tiver proximo filho
+        filho = proximo filho
+    senao resultado += valor do node
+        enquanto node nao tiver mais filhos
+            node = node pai
