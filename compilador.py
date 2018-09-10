@@ -5,6 +5,7 @@ OP2 = "OP2"
 PAR = "PAR"
 
 import re
+from node import *
 
 class Analisador:
     tokenizador = None
@@ -12,61 +13,48 @@ class Analisador:
     def inicializarTokenizador(codigoFonte):
         Analisador.tokenizador = Tokenizador(codigoFonte)
 
-    def termo():
-        resultado = 0
-        tokenizador = Analisador.tokenizador
-        
-        resultado += Analisador.analisarFator()        
-        if (tokenizador.atual.tipo != EOF):
-            while ((tokenizador.atual.tipo != PAR and tokenizador.atual.tipo != OP) and tokenizador.atual.tipo != EOF):
-                if (tokenizador.atual.valor == "*"):
-                    resultado *= Analisador.analisarFator()
-                elif (tokenizador.atual.valor == "/"):
-                    resultado /= Analisador.analisarFator()
-
-        return resultado
-
 
     def analisarExpressao():
         tokenizador = Analisador.tokenizador
-        resultado = 0
-        resultado += Analisador.termo()
-        while (tokenizador.atual.tipo == OP):
-            if (tokenizador.atual.valor == "+"):
-                resultado += Analisador.termo()
-            elif (tokenizador.atual.valor == "-"):
-                resultado -= Analisador.termo()
-            else:
-                raise ValueError ("Erro de sintaxe")
+        node = Analisador.analisarTermo()
 
-        return resultado
+        while (tokenizador.atual.tipo == OP):
+            valor_atual = tokenizador.atual.valor
+            node = BinOp(valor_atual, [node, Analisador.analisarTermo()])
+
+        return node
+        
+
+    def analisarTermo():
+        tokenizador = Analisador.tokenizador
+        
+        node = Analisador.analisarFator()  
+        while (tokenizador.atual.tipo == OP2):
+            node = BinOp(tokenizador.atual.valor, [node, Analisador.analisarFator()])
+
+        return node
+
 
     def analisarFator():
-        resultado = 0
-        fator = 1
         tokenizador = Analisador.tokenizador
         tokenizador.selecionarProximo()
-        if (tokenizador.atual.tipo != EOF):
+        
+        if (tokenizador.atual.tipo != EOF): 
             if tokenizador.atual.tipo == NUM:
-                resultado += int(tokenizador.atual.valor)
+                node = IntVal(tokenizador.atual.valor, None)
                 tokenizador.selecionarProximo()
             elif tokenizador.atual.tipo == PAR:
-                # tokenizador.selecionarProximo()
-                resultado += Analisador.analisarExpressao()
-                # tokenizador.selecionarProximo()
+                node = Analisador.analisarExpressao()
                 if (tokenizador.atual.tipo != PAR):
                     raise ValueError ("Não fechou parenteses")
                 else:
                     tokenizador.selecionarProximo()
             elif tokenizador.atual.tipo == OP:
-                if tokenizador.atual.valor == "-":
-                    fator *= -1
-                resultado += Analisador.analisarFator() * fator
-                # tokenizador.selecionarProximo()
+                node = UnOp(tokenizador.atual.valor, [Analisador.analisarFator()])
             else:
                 raise ValueError ("Token fator ou primeiro token inválido")
 
-        return resultado
+        return node
 
 
 
@@ -127,5 +115,7 @@ class Tokenizador:
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
+
 Analisador.inicializarTokenizador(input("CODIGO: "))
-print(Analisador.analisarExpressao())
+node = (Analisador.analisarExpressao())
+print(node.Evaluate())
