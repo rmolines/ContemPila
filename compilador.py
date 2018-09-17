@@ -3,15 +3,72 @@ EOF = "EOF"
 OP = "OP"
 OP2 = "OP2"
 PAR = "PAR"
+EQ = "EQ"
+PV = "PV"
+BRA = "BRA"
+PRINTF = "PRINTF"
 
 import re
 from node import *
+
+class SymbolTable:
+    table = {}
+
+    def setSymbol(symbol, value):
+        table[symbol] = value
+
+    def getSymbol(symbol):
+        return table[symbol]
+
 
 class Analisador:
     tokenizador = None
 
     def inicializarTokenizador(codigoFonte):
         Analisador.tokenizador = Tokenizador(codigoFonte)
+
+    def analisarComandos():
+        tokenizador = Analisador.tokenizador
+        tokenizador.selecionarProximo()
+
+        if (tokenizador.atual.tipo == BRA):
+            tokenizador.selecionarProximo()
+            while (tokenizador.atual.tipo != BRA):
+                Analisador.analisarComando()
+
+
+    def analisarComando():
+        tokenizador = Analisador.tokenizador
+        tokenizador.selecionarProximo()
+
+        if (tokenizador.atual.tipo == PRINT):
+            Analisador.analisarPrint
+        elif (tokenizador.atual.tipo == ID_):
+            Analisador.analisarAtribuicao
+        elif (tokenizador.atual.tipo == BRA):
+            Analisador.analisarComandos
+
+    def analisarPrint():
+        tokenizador = Analisador.tokenizador
+        node = None
+
+        if (tokenizador.atual.tipo == PRINTF):
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo == PAR):
+                node = tokenizador.analisarExpressao
+                tokenizador.selecionarProximo()
+                if(tokenizador.atual.tipo == PAR):
+                    print(node.Evaluate())
+
+    def analisarAtribuicao():
+        tokenizador = Analisador.tokenizador
+
+        if (tokenizador.atual.tipo == ID_):
+            symbol = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo == EQ):
+                node = Analisador.analisarExpressao
+                SymbolTable.setSymbol(symbol, node.Evaluate())
 
 
     def analisarExpressao():
@@ -23,12 +80,12 @@ class Analisador:
             node = BinOp(valor_atual, [node, Analisador.analisarTermo()])
 
         return node
-        
+
 
     def analisarTermo():
         tokenizador = Analisador.tokenizador
-        
-        node = Analisador.analisarFator()  
+
+        node = Analisador.analisarFator()
         while (tokenizador.atual.tipo == OP2):
             node = BinOp(tokenizador.atual.valor, [node, Analisador.analisarFator()])
 
@@ -38,8 +95,8 @@ class Analisador:
     def analisarFator():
         tokenizador = Analisador.tokenizador
         tokenizador.selecionarProximo()
-        
-        if (tokenizador.atual.tipo != EOF): 
+
+        if (tokenizador.atual.tipo != EOF):
             if tokenizador.atual.tipo == NUM:
                 node = IntVal(tokenizador.atual.valor, None)
                 tokenizador.selecionarProximo()
@@ -69,7 +126,7 @@ class Tokenizador:
         tempCodigo = codigoFonte
         while(re.search("\/\*.*\*\/", tempCodigo)):
             tempCodigo = re.sub("\/\*.*\*\/", "", tempCodigo)
-        
+
         tempCodigo = re.sub("\/\*", "", tempCodigo)
         print(tempCodigo)
 
@@ -108,13 +165,43 @@ class Tokenizador:
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
-            
+
             elif (origem[self.posicao] == "(" or origem[self.posicao] == ")"):
                 tipo = PAR
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
+            elif (origem[self.posicao] == "=":
+                tipo = EQ
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao] == "{" or origem[self.posicao] == "}"):
+                tipo = BRA
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao] == ";":
+                tipo = PV
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao].isalpha():
+                tipo = ID_
+                valor = origem[self.posicao]
+                self.posicao += 1
+                while (origem[self.posicao].isalpha() or \
+                       origem[self.posicao].isdigit() or \
+                       origem[self.posicao] == "_"):
+                       valor += origem[self.posicao]
+                       self.posicao += 1
+
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
 
 Analisador.inicializarTokenizador(input("CODIGO: "))
 node = (Analisador.analisarExpressao())
