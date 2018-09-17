@@ -42,7 +42,7 @@ class UnOp(Node):
             result = self.children[0].Evaluate()
 
         return result
-        
+
 class IntVal(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
@@ -57,5 +57,5 @@ class NoOp(Node):
 
     def Evaluate(self):
         pass
-
-
+class IdVal(Node):
+    def __init__()

@@ -50,15 +50,18 @@ class Analisador:
 
     def analisarPrint():
         tokenizador = Analisador.tokenizador
-        node = None
+        valor = None
 
         if (tokenizador.atual.tipo == PRINTF):
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == PAR):
-                node = tokenizador.analisarExpressao
                 tokenizador.selecionarProximo()
+                if (tokenizador.atual.tipo == ID_):
+                    valor = SymbolTable.getSymbol(tokenizador.atual.valor)
+                elif (tokenizador.atual.tipo == NUM)
+                    valor = Analisador.analisarExpressao().Evaluate()
                 if(tokenizador.atual.tipo == PAR):
-                    print(node.Evaluate())
+                    print(valor)
 
     def analisarAtribuicao():
         tokenizador = Analisador.tokenizador
@@ -99,6 +102,9 @@ class Analisador:
         if (tokenizador.atual.tipo != EOF):
             if tokenizador.atual.tipo == NUM:
                 node = IntVal(tokenizador.atual.valor, None)
+                tokenizador.selecionarProximo()
+            elif (tokenizador.atual.tipo == ID_):
+                node = IdVal(tokenizador.atual.valor, None)
                 tokenizador.selecionarProximo()
             elif tokenizador.atual.tipo == PAR:
                 node = Analisador.analisarExpressao()
