@@ -57,5 +57,33 @@ class NoOp(Node):
 
     def Evaluate(self):
         pass
+
 class IdVal(Node):
-    def __init__()
+    def __init__(self, symbol, valor):
+        Node.__init__(self, symbol)
+        SymbolTable.setSymbol(symbol)
+
+    def Evaluate(symbol):
+        return SymbolTable.getSymbol(self.symbol)
+
+class Printf(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+
+    def Evaluate(self):
+        print(children.Evaluate())
+
+class Eq(Node):
+    def __init__(self, id_, children):
+        Node.__init__(id_, children)
+
+    def Evaluate(self):
+        SymbolTable.setSymbol(_id, children.Evaluate())
+
+class Commands(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+
+    def Evaluate(self):
+        for i in self.children:
+            i.Evaluate()

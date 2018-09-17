@@ -30,48 +30,59 @@ class Analisador:
     def analisarComandos():
         tokenizador = Analisador.tokenizador
         tokenizador.selecionarProximo()
+        nodes = []
+        node = None
 
         if (tokenizador.atual.tipo == BRA):
             tokenizador.selecionarProximo()
             while (tokenizador.atual.tipo != BRA):
-                Analisador.analisarComando()
+                nodes.append(Analisador.analisarComando())
+            if (tokenizador.atual.tipo == BRA):
+                node = Commands(nodes)
+
+
+        return node
 
 
     def analisarComando():
         tokenizador = Analisador.tokenizador
         tokenizador.selecionarProximo()
 
+        node = None
+
         if (tokenizador.atual.tipo == PRINT):
-            Analisador.analisarPrint
+            node = Analisador.analisarPrint()
         elif (tokenizador.atual.tipo == ID_):
-            Analisador.analisarAtribuicao
+            node = Analisador.analisarAtribuicao()
         elif (tokenizador.atual.tipo == BRA):
-            Analisador.analisarComandos
+            node = Analisador.analisarComandos()
+
+        return node
 
     def analisarPrint():
         tokenizador = Analisador.tokenizador
         valor = None
-
+        node = None
         if (tokenizador.atual.tipo == PRINTF):
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == PAR):
-                tokenizador.selecionarProximo()
-                if (tokenizador.atual.tipo == ID_):
-                    valor = SymbolTable.getSymbol(tokenizador.atual.valor)
-                elif (tokenizador.atual.tipo == NUM)
-                    valor = Analisador.analisarExpressao().Evaluate()
+                node = Analisador.analisarExpressao()
                 if(tokenizador.atual.tipo == PAR):
-                    print(valor)
+                    node = Printf(node)
+
+        return node
 
     def analisarAtribuicao():
         tokenizador = Analisador.tokenizador
+        node = None
 
         if (tokenizador.atual.tipo == ID_):
             symbol = tokenizador.atual.valor
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == EQ):
-                node = Analisador.analisarExpressao
-                SymbolTable.setSymbol(symbol, node.Evaluate())
+                node = Eq(symbol, Analisador.analisarExpressao())
+
+        return node
 
 
     def analisarExpressao():
@@ -104,7 +115,7 @@ class Analisador:
                 node = IntVal(tokenizador.atual.valor, None)
                 tokenizador.selecionarProximo()
             elif (tokenizador.atual.tipo == ID_):
-                node = IdVal(tokenizador.atual.valor, None)
+                node = IdVal(tokenizador.atual.valor)
                 tokenizador.selecionarProximo()
             elif tokenizador.atual.tipo == PAR:
                 node = Analisador.analisarExpressao()
