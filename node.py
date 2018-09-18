@@ -1,3 +1,5 @@
+from symboltable import *
+
 class Node:
     value = None
     children = None
@@ -6,7 +8,7 @@ class Node:
         self.value = value
         self.children = children
 
-    def Evaluate():
+    def Evaluate(self):
         pass
 
 class BinOp(Node):
@@ -59,26 +61,25 @@ class NoOp(Node):
         pass
 
 class IdVal(Node):
-    def __init__(self, symbol, valor):
-        Node.__init__(self, symbol)
-        SymbolTable.setSymbol(symbol)
+    def __init__(self, symbol):
+        Node.__init__(self, symbol, None)
 
-    def Evaluate(symbol):
-        return SymbolTable.getSymbol(self.symbol)
+    def Evaluate(self):
+        return SymbolTable.getSymbol(self.value)
 
 class Printf(Node):
     def __init__(self, children):
         Node.__init__(self, None, children)
 
     def Evaluate(self):
-        print(children.Evaluate())
+        print(self.children.Evaluate())
 
 class Eq(Node):
-    def __init__(self, id_, children):
-        Node.__init__(id_, children)
+    def __init__(self, symbol, children):
+        Node.__init__(self, symbol, children)
 
     def Evaluate(self):
-        SymbolTable.setSymbol(_id, children.Evaluate())
+        SymbolTable.setSymbol(self.value.value, self.children.Evaluate())
 
 class Commands(Node):
     def __init__(self, children):

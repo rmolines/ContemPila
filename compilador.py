@@ -7,18 +7,10 @@ EQ = "EQ"
 PV = "PV"
 BRA = "BRA"
 PRINTF = "PRINTF"
+ID_ = "ID_"
 
 import re
 from node import *
-
-class SymbolTable:
-    table = {}
-
-    def setSymbol(symbol, value):
-        table[symbol] = value
-
-    def getSymbol(symbol):
-        return table[symbol]
 
 
 class Analisador:
@@ -35,8 +27,11 @@ class Analisador:
 
         if (tokenizador.atual.tipo == BRA):
             tokenizador.selecionarProximo()
-            while (tokenizador.atual.tipo != BRA):
+            nodes.append(Analisador.analisarComando())
+            while (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
                 nodes.append(Analisador.analisarComando())
+                # tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == BRA):
                 node = Commands(nodes)
 
@@ -46,16 +41,27 @@ class Analisador:
 
     def analisarComando():
         tokenizador = Analisador.tokenizador
-        tokenizador.selecionarProximo()
 
         node = None
 
-        if (tokenizador.atual.tipo == PRINT):
+        if (tokenizador.atual.tipo == PRINTF):
             node = Analisador.analisarPrint()
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo != PV):
+                raise ValueError ("Faltando ponto e vírgula")
+            
         elif (tokenizador.atual.tipo == ID_):
             node = Analisador.analisarAtribuicao()
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo != PV):
+                raise ValueError ("Faltando ponto e vírgula")
+            
         elif (tokenizador.atual.tipo == BRA):
             node = Analisador.analisarComandos()
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo != PV):
+                raise ValueError ("Faltando ponto e vírgula")
+            
 
         return node
 
@@ -69,6 +75,7 @@ class Analisador:
                 node = Analisador.analisarExpressao()
                 if(tokenizador.atual.tipo == PAR):
                     node = Printf(node)
+                    tokenizador.selecionarProximo()
 
         return node
 
@@ -77,7 +84,7 @@ class Analisador:
         node = None
 
         if (tokenizador.atual.tipo == ID_):
-            symbol = tokenizador.atual.valor
+            symbol = IdVal(tokenizador.atual.valor)
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == EQ):
                 node = Eq(symbol, Analisador.analisarExpressao())
@@ -113,20 +120,16 @@ class Analisador:
         if (tokenizador.atual.tipo != EOF):
             if tokenizador.atual.tipo == NUM:
                 node = IntVal(tokenizador.atual.valor, None)
-                tokenizador.selecionarProximo()
             elif (tokenizador.atual.tipo == ID_):
                 node = IdVal(tokenizador.atual.valor)
-                tokenizador.selecionarProximo()
             elif tokenizador.atual.tipo == PAR:
                 node = Analisador.analisarExpressao()
                 if (tokenizador.atual.tipo != PAR):
-                    raise ValueError ("Não fechou parenteses")
-                else:
-                    tokenizador.selecionarProximo()
+                    raise ValueError ("Nao fechou parenteses")
             elif tokenizador.atual.tipo == OP:
                 node = UnOp(tokenizador.atual.valor, [Analisador.analisarFator()])
             else:
-                raise ValueError ("Token fator ou primeiro token inválido")
+                raise ValueError ("Token fator ou primeiro token invalido")
 
         return node
 
@@ -189,7 +192,7 @@ class Tokenizador:
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
-            elif (origem[self.posicao] == "=":
+            elif (origem[self.posicao] == "="):
                 tipo = EQ
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
@@ -201,13 +204,13 @@ class Tokenizador:
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
-            elif (origem[self.posicao] == ";":
+            elif (origem[self.posicao] == ";"):
                 tipo = PV
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
-            elif (origem[self.posicao].isalpha():
+            elif (origem[self.posicao].isalpha()):
                 tipo = ID_
                 valor = origem[self.posicao]
                 self.posicao += 1
@@ -216,10 +219,13 @@ class Tokenizador:
                        origem[self.posicao] == "_"):
                        valor += origem[self.posicao]
                        self.posicao += 1
+                if (valor == "printf"):
+                    self.atual = Token(PRINTF, valor)
+                else:
+                    self.atual = Token(tipo, valor)
 
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-Analisador.inicializarTokenizador(input("CODIGO: "))
-node = (Analisador.analisarExpressao())
-print(node.Evaluate())
+code = open("./input", "r").read()
+code = code.replace("\n","")
+Analisador.inicializarTokenizador(code)
+node = (Analisador.analisarComandos())
+(node.Evaluate())
