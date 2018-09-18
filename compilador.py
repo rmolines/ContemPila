@@ -28,10 +28,11 @@ class Analisador:
         if (tokenizador.atual.tipo == BRA):
             tokenizador.selecionarProximo()
             nodes.append(Analisador.analisarComando())
-            while (tokenizador.atual.tipo == PV):
-                tokenizador.selecionarProximo()
+            tokenizador.selecionarProximo()
+    
+            while (tokenizador.atual.tipo != BRA):
                 nodes.append(Analisador.analisarComando())
-                # tokenizador.selecionarProximo()
+                tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == BRA):
                 node = Commands(nodes)
 
@@ -46,19 +47,16 @@ class Analisador:
 
         if (tokenizador.atual.tipo == PRINTF):
             node = Analisador.analisarPrint()
-            tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo != PV):
                 raise ValueError ("Faltando ponto e vírgula")
             
         elif (tokenizador.atual.tipo == ID_):
             node = Analisador.analisarAtribuicao()
-            tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo != PV):
                 raise ValueError ("Faltando ponto e vírgula")
             
         elif (tokenizador.atual.tipo == BRA):
             node = Analisador.analisarComandos()
-            tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo != PV):
                 raise ValueError ("Faltando ponto e vírgula")
             
@@ -105,8 +103,8 @@ class Analisador:
 
     def analisarTermo():
         tokenizador = Analisador.tokenizador
-
         node = Analisador.analisarFator()
+        
         while (tokenizador.atual.tipo == OP2):
             node = BinOp(tokenizador.atual.valor, [node, Analisador.analisarFator()])
 
@@ -131,6 +129,7 @@ class Analisador:
             else:
                 raise ValueError ("Token fator ou primeiro token invalido")
 
+        tokenizador.selecionarProximo()
         return node
 
 

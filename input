@@ -1,1 +1,1 @@
-{x=3;y=x+x;printf(x);}
+{x=3;y=x+x;printf(y);}
