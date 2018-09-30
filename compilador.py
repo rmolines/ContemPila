@@ -18,23 +18,24 @@ class Analisador:
 
     def inicializarTokenizador(codigoFonte):
         Analisador.tokenizador = Tokenizador(codigoFonte)
+        Analisador.tokenizador.selecionarProximo()
 
     def analisarComandos():
         tokenizador = Analisador.tokenizador
-        tokenizador.selecionarProximo()
         nodes = []
         node = None
 
-        if (tokenizador.atual.tipo == BRA):
+        if (tokenizador.atual.valor == "{"):
             tokenizador.selecionarProximo()
             nodes.append(Analisador.analisarComando())
             tokenizador.selecionarProximo()
     
-            while (tokenizador.atual.tipo != BRA):
+            while (tokenizador.atual.valor != "}"):
                 nodes.append(Analisador.analisarComando())
                 tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == BRA):
                 node = Commands(nodes)
+        tokenizador.selecionarProximo()
 
 
         return node
@@ -70,6 +71,7 @@ class Analisador:
         if (tokenizador.atual.tipo == PRINTF):
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == PAR):
+                tokenizador.selecionarProximo()
                 node = Analisador.analisarExpressao()
                 if(tokenizador.atual.tipo == PAR):
                     node = Printf(node)
@@ -85,6 +87,7 @@ class Analisador:
             symbol = IdVal(tokenizador.atual.valor)
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == EQ):
+                tokenizador.selecionarProximo()
                 node = Eq(symbol, Analisador.analisarExpressao())
 
         return node
@@ -96,6 +99,7 @@ class Analisador:
 
         while (tokenizador.atual.tipo == OP):
             valor_atual = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
             node = BinOp(valor_atual, [node, Analisador.analisarTermo()])
 
         return node
@@ -106,14 +110,15 @@ class Analisador:
         node = Analisador.analisarFator()
         
         while (tokenizador.atual.tipo == OP2):
-            node = BinOp(tokenizador.atual.valor, [node, Analisador.analisarFator()])
+            valor_atual = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            node = BinOp(valor_atual, [node, Analisador.analisarFator()])
 
         return node
 
 
     def analisarFator():
         tokenizador = Analisador.tokenizador
-        tokenizador.selecionarProximo()
 
         if (tokenizador.atual.tipo != EOF):
             if tokenizador.atual.tipo == NUM:
