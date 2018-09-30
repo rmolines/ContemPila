@@ -31,6 +31,31 @@ class BinOp(Node):
 
         return result
 
+class RelOp(Node):
+    def __init__(self, value, children):
+        Node.__init__(self, value, children)
+
+    def Evaluate(self):
+        exp1 = self.children[0].Evaluate
+        exp2 = self.children[1].Evaluate
+        result = False
+        if (self.value == ">"):
+            result = exp1>exp2
+        elif (self.value == "<"):
+            result = exp1<exp2
+        elif (self.value == "=="):
+            result = exp1==exp2
+        
+        return result
+            
+                
+class BoolOp(Node):
+    def __init__(self, value, children):
+        Node.__init__(self, value, children)
+    
+    def Evaluate(self):
+        return (!self.children)
+
 class UnOp(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
@@ -73,6 +98,17 @@ class Printf(Node):
 
     def Evaluate(self):
         print(self.children.Evaluate())
+
+class If(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+
+    def Evaluate(self):
+        if (self.children[0].Evaluate):
+            self.children[1].Evaluate
+        else:
+            self.children[2].Evaluate
+
 
 class Eq(Node):
     def __init__(self, symbol, children):

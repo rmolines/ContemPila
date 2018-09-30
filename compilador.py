@@ -8,6 +8,11 @@ PV = "PV"
 BRA = "BRA"
 PRINTF = "PRINTF"
 ID_ = "ID_"
+BOOL = "BOOL"
+IF = "IF"
+WHILE = "WHILE"
+ELSE = "ELSE"
+BOOLOP = "BOOLOP"
 
 import re
 from node import *
@@ -61,6 +66,16 @@ class Analisador:
             if (tokenizador.atual.tipo != PV):
                 raise ValueError ("Faltando ponto e vírgula")
             
+        elif (tokenizador.atual.tipo == IF):
+            node = Analisador.analisarIf()
+            if (tokenizador.atual.tipo != PV):
+                raise ValueError ("Faltando ponto e vírgula")
+            
+        elif (tokenizador.atual.tipo == WHILE):
+            node = Analisador.analisarWhile()
+            if (tokenizador.atual.tipo != PV):
+                raise ValueError ("Faltando ponto e vírgula")
+            
 
         return node
 
@@ -78,6 +93,40 @@ class Analisador:
                     tokenizador.selecionarProximo()
 
         return node
+
+    def analisarIf():
+        tokenizador = Analisador.tokenizador
+        node = None
+        if (tokenizador.atual.tipo == IF):
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo == PAR):
+                tokenizador.selecionarProximo()
+                boolNode = Analisador.analisarBool()
+                if (tokenizador.atual.valor == ")"):
+                    tokenizador.selecionarProximo()
+                    trueNode = Analisador.analisarComandos()
+                    if (tokenizador.atual.tipo == ELSE):
+                        node = If([boolNode, trueNode, Analisador.analisarComandos()])
+
+        return node
+
+    def analisarBool():
+        tokenizador = Analisador.tokenizador
+        node = None
+
+        if (tokenizador.atual.tipo == BOOLOP):
+            boolOp = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            exp = 
+
+    def analisarExpBool():
+        tokenizador = Analisador.tokenizador
+        node = Analisador.analisarTermoBool
+
+    def analisarRel():
+        
+
+
 
     def analisarAtribuicao():
         tokenizador = Analisador.tokenizador
@@ -213,6 +262,13 @@ class Tokenizador:
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
+            
+            elif (origem[self.posicao] == "!"):
+                tipo = BOOL
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+                 
 
             elif (origem[self.posicao].isalpha()):
                 tipo = ID_
