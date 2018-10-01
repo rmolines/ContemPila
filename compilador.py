@@ -299,6 +299,12 @@ class Tokenizador:
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
 
+            elif (origem[self.posicao:self.posicao+2] == "=="):
+                tipo = REL
+                valor = origem[self.posicao:self.posicao+2]
+                self.atual = Token(tipo, valor)
+                self.posicao += 2
+
             elif (origem[self.posicao] == "="):
                 tipo = EQ
                 valor = origem[self.posicao]
@@ -376,12 +382,6 @@ class Tokenizador:
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
-
-            elif (origem[self.posicao:self.posicao+2] == "=="):
-                tipo = REL
-                valor = origem[self.posicao:self.posicao+2]
-                self.atual = Token(tipo, valor)
-                self.posicao += 2
                  
             elif (origem[self.posicao].isalpha()):
                 tipo = ID_

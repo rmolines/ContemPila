@@ -118,7 +118,7 @@ class Scanf(Node):
         Node.__init__(self, None, children)
     
     def Evaluate(self):
-        temp = input()
+        temp = int(input())
         SymbolTable.setSymbol(self.children.value, temp)
 
 class If(Node):

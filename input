@@ -1,9 +1,13 @@
 {
     x = 6;
     y = 4;
-    while(y<x){
+    while(y<x && y<5){
         y=y+1
         scanf(z);
-        printf(z);
+        if (z==6 && y<z){
+            printf(z);
+        } else {
+            printf(24);
+        }
     }
 }
