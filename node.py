@@ -36,8 +36,8 @@ class RelOp(Node):
         Node.__init__(self, value, children)
 
     def Evaluate(self):
-        exp1 = self.children[0].Evaluate
-        exp2 = self.children[1].Evaluate
+        exp1 = self.children[0].Evaluate()
+        exp2 = self.children[1].Evaluate()
         result = False
         if (self.value == ">"):
             result = exp1>exp2
@@ -49,12 +49,26 @@ class RelOp(Node):
         return result
             
                 
+class NotOp(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+    
+    def Evaluate(self):
+        return (not self.children)
+
 class BoolOp(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
     
     def Evaluate(self):
-        return (!self.children)
+        result = None
+
+        if (self.value == "&&"):
+            result = self.children[0].Evaluate() and self.children[1].Evaluate()
+        elif (self.value == "||"):
+            result = self.children[0].Evaluate() or self.children[1].Evaluate()
+
+        return result
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -104,10 +118,19 @@ class If(Node):
         Node.__init__(self, None, children)
 
     def Evaluate(self):
-        if (self.children[0].Evaluate):
-            self.children[1].Evaluate
+        if (self.children[0].Evaluate()):
+            self.children[1].Evaluate()
         else:
-            self.children[2].Evaluate
+            if (self.children[2]):
+                self.children[2].Evaluate()
+
+class While(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+    
+    def  Evaluate(self):
+        while(self.children[0].Evaluate()):
+            self.children[1].Evaluate()
 
 
 class Eq(Node):

@@ -1,10 +1,60 @@
-comandos : “{”, comando, “;”, { comando, “;” }, “}” ;
-comando : atribuição | comandos ;
-atribuição : identificador, “=”, expressão ;
-expressão : termo, { (“+” | “-”), termo } ;
-termo : fator, { (“*” | “/”), fator } ;
-fator : (“+” | “-”), fator | número | “(”, expressão, “)” | identificador ;
-identificador : letra, { letra | digito | “_” } ;
-número : dígito, { dígito } ;
-letra : ( a | ... | z | A | ... | Z ) ;
-dígito : ( 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 ) ;
+program
+   : statement+
+   ;
+
+statement
+   : 'se' paren_expr statement
+   | 'se' paren_expr statement 'senao' statement
+   | 'enquanto' paren_expr statement
+   | '{' statement* '}'
+   | expr ';'
+   | ';'
+   ;
+
+paren_expr
+   : '(' expr ')'
+   ;
+
+expr
+   : test
+   | id '=' expr
+   ;
+
+test
+   : sum
+   | sum '<' sum
+   ;
+
+sum
+   : term
+   | sum '+' term
+   | sum '-' term
+   ;
+
+term
+   : id
+   | integer
+   | paren_expr
+   ;
+
+id
+   : STRING
+   ;
+
+integer
+   : INT
+   ;
+
+
+STRING
+   : [a-z]+
+   ;
+
+
+INT
+   : [0-9]+
+   ;
+
+WS
+   : [ \r\n\t] -> skip
+   ;

@@ -13,6 +13,8 @@ IF = "IF"
 WHILE = "WHILE"
 ELSE = "ELSE"
 BOOLOP = "BOOLOP"
+REL = "REL"
+NOT = "NOT" 
 
 import re
 from node import *
@@ -33,13 +35,10 @@ class Analisador:
         if (tokenizador.atual.valor == "{"):
             tokenizador.selecionarProximo()
             nodes.append(Analisador.analisarComando())
-            tokenizador.selecionarProximo()
     
             while (tokenizador.atual.valor != "}"):
                 nodes.append(Analisador.analisarComando())
-                tokenizador.selecionarProximo()
-            if (tokenizador.atual.tipo == BRA):
-                node = Commands(nodes)
+            node = Commands(nodes)
         tokenizador.selecionarProximo()
 
 
@@ -53,28 +52,26 @@ class Analisador:
 
         if (tokenizador.atual.tipo == PRINTF):
             node = Analisador.analisarPrint()
-            if (tokenizador.atual.tipo != PV):
-                raise ValueError ("Faltando ponto e vírgula")
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
             
         elif (tokenizador.atual.tipo == ID_):
             node = Analisador.analisarAtribuicao()
-            if (tokenizador.atual.tipo != PV):
-                raise ValueError ("Faltando ponto e vírgula")
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
             
         elif (tokenizador.atual.tipo == BRA):
             node = Analisador.analisarComandos()
-            if (tokenizador.atual.tipo != PV):
-                raise ValueError ("Faltando ponto e vírgula")
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
             
         elif (tokenizador.atual.tipo == IF):
             node = Analisador.analisarIf()
-            if (tokenizador.atual.tipo != PV):
-                raise ValueError ("Faltando ponto e vírgula")
             
         elif (tokenizador.atual.tipo == WHILE):
             node = Analisador.analisarWhile()
-            if (tokenizador.atual.tipo != PV):
-                raise ValueError ("Faltando ponto e vírgula")
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
             
 
         return node
@@ -94,6 +91,21 @@ class Analisador:
 
         return node
 
+    def analisarWhile():
+        tokenizador = Analisador.tokenizador
+        node = None
+        if (tokenizador.atual.tipo == WHILE):
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo == PAR):
+                tokenizador.selecionarProximo()
+                boolNode = Analisador.analisarBool()
+                if (tokenizador.atual.valor == ")"):
+                    tokenizador.selecionarProximo()
+                    node = While([boolNode, Analisador.analisarComandos()])
+        
+        return node
+
+
     def analisarIf():
         tokenizador = Analisador.tokenizador
         node = None
@@ -104,9 +116,13 @@ class Analisador:
                 boolNode = Analisador.analisarBool()
                 if (tokenizador.atual.valor == ")"):
                     tokenizador.selecionarProximo()
-                    trueNode = Analisador.analisarComandos()
+                    node = Analisador.analisarComandos()
                     if (tokenizador.atual.tipo == ELSE):
-                        node = If([boolNode, trueNode, Analisador.analisarComandos()])
+                        tokenizador.selecionarProximo()
+                        node = If([boolNode, node, Analisador.analisarComandos()])
+                    else:
+                        node = If([boolNode, node, None])
+
 
         return node
 
@@ -114,19 +130,32 @@ class Analisador:
         tokenizador = Analisador.tokenizador
         node = None
 
-        if (tokenizador.atual.tipo == BOOLOP):
-            boolOp = tokenizador.atual.valor
+        if (tokenizador.atual.tipo == NOT):
             tokenizador.selecionarProximo()
-            exp = 
+            node = NotOp(Analisador.analisarRel())
+        else :
+            node = Analisador.analisarRel()
+        
+        if (tokenizador.atual.tipo == BOOL):
+            valor_atual = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            node = BoolOp(valor_atual, [node, Analisador.analisarBool()])
 
-    def analisarExpBool():
-        tokenizador = Analisador.tokenizador
-        node = Analisador.analisarTermoBool
+        return node
+
+
 
     def analisarRel():
+        tokenizador = Analisador.tokenizador                
+        exp = Analisador.analisarExpressao()
+        relOpNode = None
+
+        if (tokenizador.atual.tipo == REL):
+            valor_atual = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            relOpNode = RelOp(valor_atual, [exp, Analisador.analisarExpressao()])
         
-
-
+        return relOpNode
 
     def analisarAtribuicao():
         tokenizador = Analisador.tokenizador
@@ -264,12 +293,65 @@ class Tokenizador:
                 self.posicao += 1
             
             elif (origem[self.posicao] == "!"):
-                tipo = BOOL
+                tipo = NOT
                 valor = origem[self.posicao]
                 self.atual = Token(tipo, valor)
                 self.posicao += 1
-                 
 
+            elif (origem[self.posicao] == "i" and origem[self.posicao+1] == "f"):
+                tipo = IF
+                valor = origem[self.posicao]+origem[self.posicao+1]
+                self.atual = Token(tipo, valor)
+                self.posicao += 2
+
+            elif (origem[self.posicao:self.posicao+4] == "else"):
+                tipo = ELSE
+                valor = origem[self.posicao:self.posicao+4]
+                self.atual = Token(tipo, valor)
+                self.posicao += 4
+
+            elif (origem[self.posicao:self.posicao+5] == "while"):
+                tipo = WHILE
+                valor = origem[self.posicao:self.posicao+5]
+                self.atual = Token(tipo, valor)
+                self.posicao += 5
+
+            elif (origem[self.posicao:self.posicao+2] == "||"):
+                tipo = BOOL
+                valor = origem[self.posicao:self.posicao+2]
+                self.atual = Token(tipo, valor)
+                self.posicao += 2
+
+            elif (origem[self.posicao:self.posicao+2] == "&&"):
+                tipo = BOOL
+                valor = origem[self.posicao:self.posicao+2]
+                self.atual = Token(tipo, valor)
+                self.posicao += 2
+
+            elif (origem[self.posicao] == "!"):
+                tipo = NOT
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao] == ">"):
+                tipo = REL
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao] == "<"):
+                tipo = REL
+                valor = origem[self.posicao]
+                self.atual = Token(tipo, valor)
+                self.posicao += 1
+
+            elif (origem[self.posicao:self.posicao+2] == "=="):
+                tipo = REL
+                valor = origem[self.posicao:self.posicao+2]
+                self.atual = Token(tipo, valor)
+                self.posicao += 2
+                 
             elif (origem[self.posicao].isalpha()):
                 tipo = ID_
                 valor = origem[self.posicao]
