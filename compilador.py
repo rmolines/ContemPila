@@ -15,6 +15,8 @@ ELSE = "ELSE"
 BOOLOP = "BOOLOP"
 REL = "REL"
 NOT = "NOT" 
+SCANF = "SCANF" 
+
 
 import re
 from node import *
@@ -54,6 +56,11 @@ class Analisador:
             node = Analisador.analisarPrint()
             if (tokenizador.atual.tipo == PV):
                 tokenizador.selecionarProximo()
+
+        elif (tokenizador.atual.tipo == SCANF):
+            node = Analisador.analisarScanf()
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
             
         elif (tokenizador.atual.tipo == ID_):
             node = Analisador.analisarAtribuicao()
@@ -88,6 +95,24 @@ class Analisador:
                 if(tokenizador.atual.tipo == PAR):
                     node = Printf(node)
                     tokenizador.selecionarProximo()
+
+        return node
+
+
+    def analisarScanf():
+        tokenizador = Analisador.tokenizador
+        nodeid = None
+        node = None
+        if (tokenizador.atual.tipo == SCANF):
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.tipo == PAR):
+                tokenizador.selecionarProximo()
+                if (tokenizador.atual.tipo == ID_):
+                    nodeid = IdVal(tokenizador.atual.valor) 
+                    tokenizador.selecionarProximo()
+                    if(tokenizador.atual.tipo == PAR):
+                        node = Scanf(nodeid)
+                        tokenizador.selecionarProximo()
 
         return node
 
@@ -309,6 +334,12 @@ class Tokenizador:
                 valor = origem[self.posicao:self.posicao+4]
                 self.atual = Token(tipo, valor)
                 self.posicao += 4
+
+            elif (origem[self.posicao:self.posicao+5] == "scanf"):
+                tipo = SCANF
+                valor = origem[self.posicao:self.posicao+5]
+                self.atual = Token(tipo, valor)
+                self.posicao += 5
 
             elif (origem[self.posicao:self.posicao+5] == "while"):
                 tipo = WHILE

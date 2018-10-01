@@ -113,6 +113,14 @@ class Printf(Node):
     def Evaluate(self):
         print(self.children.Evaluate())
 
+class Scanf(Node):
+    def __init__(self, children):
+        Node.__init__(self, None, children)
+    
+    def Evaluate(self):
+        temp = input()
+        SymbolTable.setSymbol(self.children.value, temp)
+
 class If(Node):
     def __init__(self, children):
         Node.__init__(self, None, children)
