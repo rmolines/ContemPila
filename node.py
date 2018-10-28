@@ -106,6 +106,17 @@ class IdVal(Node):
     def Evaluate(self):
         return SymbolTable.getSymbol(self.value)
 
+class VarDec(Node):
+    def __init__(self, tipo, symbol):
+        Node.__init__(self, tipo, symbol)
+
+    def Evaluate(self):
+        for i in self.children:
+            SymbolTable.setType(self.value, i)
+    
+    def PushSymbol(self, symbol):
+        self.children.append(symbol)
+
 class Printf(Node):
     def __init__(self, children):
         Node.__init__(self, None, children)
@@ -146,7 +157,16 @@ class Eq(Node):
         Node.__init__(self, symbol, children)
 
     def Evaluate(self):
-        SymbolTable.setSymbol(self.value.value, self.children.Evaluate())
+        tipo = SymbolTable.getType(self.value.value)
+        valor = self.children.Evaluate()
+        if (type(valor) == int and tipo == 'int'):
+            SymbolTable.setSymbol(self.value.value, valor)
+        elif (type(valor) == str and tipo == 'str'):
+            SymbolTable.setSymbol(self.value.value, valor)
+        elif(type(valor) == 'char' and tipo == 'char'):
+            SymbolTable.setSymbol(self.value.value, valor)
+        else:
+            raise ValueError
 
 class Commands(Node):
     def __init__(self, children):

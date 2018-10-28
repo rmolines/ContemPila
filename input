@@ -1,4 +1,6 @@
-{
+void main() {
+    int x, y;
+    int z;
     x = 6;
     y = 4;
     while(y<x && y<5){
