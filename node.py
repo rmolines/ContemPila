@@ -16,8 +16,8 @@ class BinOp(Node):
         Node.__init__(self, value, children)
 
     def Evaluate(self):
-        left_val = self.children[0].Evaluate()
-        right_val = self.children[1].Evaluate()
+        left_val = self.children[0].Evaluate()[0]
+        right_val = self.children[1].Evaluate()[0]
         result = None
 
         if self.value == '+':
@@ -29,15 +29,15 @@ class BinOp(Node):
         elif self.value == "-":
             result = left_val-right_val
 
-        return result
+        return (result, 'int')
 
 class RelOp(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
 
     def Evaluate(self):
-        exp1 = self.children[0].Evaluate()
-        exp2 = self.children[1].Evaluate()
+        exp1 = self.children[0].Evaluate()[0]
+        exp2 = self.children[1].Evaluate()[0]
         result = False
         if (self.value == ">"):
             result = exp1>exp2
@@ -78,9 +78,9 @@ class UnOp(Node):
         result = None
 
         if self.value == "-":
-            result = self.children[0].Evaluate() * -1
+            result = self.children[0].Evaluate()[0] * -1
         elif self.value == "+":
-            result = self.children[0].Evaluate()
+            result = self.children[0].Evaluate()[0]
 
         return result
 
@@ -89,7 +89,14 @@ class IntVal(Node):
         Node.__init__(self, value, children)
 
     def Evaluate(self):
-        return int(self.value)
+        return (int(self.value), 'int')
+
+class BoolVal(Node):
+    def __init__(self, value, children):
+        Node.__init__(self, value, children)
+
+    def Evaluate(self):
+        return (bool(self.value), 'char')
 
 
 class NoOp(Node):
@@ -122,7 +129,7 @@ class Printf(Node):
         Node.__init__(self, None, children)
 
     def Evaluate(self):
-        print(self.children.Evaluate())
+        print(self.children.Evaluate()[0])
 
 class Scanf(Node):
     def __init__(self, children):
@@ -130,6 +137,8 @@ class Scanf(Node):
     
     def Evaluate(self):
         temp = int(input())
+        tipo = SymbolTable.getType(self.children.value)
+
         SymbolTable.setSymbol(self.children.value, temp)
 
 class If(Node):
@@ -159,14 +168,10 @@ class Eq(Node):
     def Evaluate(self):
         tipo = SymbolTable.getType(self.value.value)
         valor = self.children.Evaluate()
-        if (type(valor) == int and tipo == 'int'):
-            SymbolTable.setSymbol(self.value.value, valor)
-        elif (type(valor) == str and tipo == 'str'):
-            SymbolTable.setSymbol(self.value.value, valor)
-        elif(type(valor) == 'char' and tipo == 'char'):
-            SymbolTable.setSymbol(self.value.value, valor)
+        if (valor[1] == tipo):
+            SymbolTable.setSymbol(self.value.value, valor[0])
         else:
-            raise ValueError
+            raise ValueError ('Erro de tipagem')
 
 class Commands(Node):
     def __init__(self, children):

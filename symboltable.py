@@ -6,7 +6,7 @@ class SymbolTable:
         SymbolTable.valueTable[symbol] = value
 
     def getSymbol(symbol):
-        return SymbolTable.valueTable[symbol]
+        return (SymbolTable.valueTable[symbol], SymbolTable.typeTable[symbol])
     
     def setType(tipo, symbol):
         SymbolTable.typeTable[symbol] = tipo
