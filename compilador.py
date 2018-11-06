@@ -1,52 +1,62 @@
-NUM = "NUM"
-EOF = "EOF"
-OP = "OP"
-OP2 = "OP2"
-PAR = "PAR"
-EQ = "EQ"
-PV = "PV"
-BRA = "BRA"
-PRINTF = "PRINTF"
-ID_ = "ID_"
-BOOL = "BOOL"
-IF = "IF"
-WHILE = "WHILE"
-ELSE = "ELSE"
-BOOLOP = "BOOLOP"
-REL = "REL"
-NOT = "NOT" 
-SCANF = "SCANF" 
-COMMA = ","
-TYPE = "TYPE"
-
 import re
 from node import *
-
+from tokenizador import *
 
 class Analisador:
     tokenizador = None
+    raiz = None
 
     def inicializarTokenizador(codigoFonte):
         Analisador.tokenizador = Tokenizador(codigoFonte)
         Analisador.tokenizador.selecionarProximo()
+        st = SymbolTable(None)
+        Analisador.raiz = Program(st, [])
 
-    def analisarPrograma():
+    def analisarFuncDec():
         tokenizador = Analisador.tokenizador
         nodes = []
         node = None
+        tipo = None
+        has_more_args = True
+        arg_tipo = None
+        arg_id = None
 
-        if (tokenizador.atual.valor == "void"):
+        while (tokenizador.atual.tipo == TYPE):
+            args = []
+
+            tipo = tokenizador.atual.valor
             tokenizador.selecionarProximo()
-            if (tokenizador.atual.valor == "main"):
+            if (tokenizador.atual.tipo == ID_):
+                func = (tipo, tokenizador.atual.valor)
                 tokenizador.selecionarProximo()
                 if(tokenizador.atual.valor == "("):
                     tokenizador.selecionarProximo()
-                    if(tokenizador.atual.valor == ")"):
+                    if(tokenizador.atual.tipo == TYPE):  
+                        while(has_more_args):
+                            arg_tipo = tokenizador.atual.valor
+                            tokenizador.selecionarProximo()
+                            if(tokenizador.atual.tipo == ID_):
+                                arg_id = tokenizador.atual.valor
+                                args.append(VarDec(arg_tipo, [arg_id]))
+                                tokenizador.selecionarProximo()
+                                if(tokenizador.atual.valor == ")"):
+                                    tokenizador.selecionarProximo()
+                                    has_more_args = False
+                                elif(tokenizador.atual.tipo == COMMA):
+                                    tokenizador.selecionarProximo()
+                            else:
+                                raise ValueError("Erro de declaracao de argumento")
+                    elif (tokenizador.atual.valor == ")"):
                         tokenizador.selecionarProximo()
-                        
-                        node = Analisador.analisarComandos()
+
+                    node = Analisador.analisarComandos()
+                    args.append(node)
+                    node = FuncDec(func, args)
+                    Analisador.raiz.pushChild(node)
+    
+        Analisador.raiz.pushChild(Analisador.analisarFuncCall()) 
+            
         
-        return node
 
     def analisarComandos():
         tokenizador = Analisador.tokenizador
@@ -62,8 +72,36 @@ class Analisador:
             node = Commands(nodes)
         tokenizador.selecionarProximo()
 
-
         return node
+
+    def analisarFuncCall():
+        tokenizador = Analisador.tokenizador
+        id_ = None
+        children = []
+
+        if (tokenizador.atual.tipo == ID_):
+            id_ = tokenizador.atual.valor
+            tokenizador.selecionarProximo()
+            if (tokenizador.atual.valor == "("):
+                tokenizador.selecionarProximo()
+                while(True):
+                    if (tokenizador.atual.valor == ")"):
+                        tokenizador.selecionarProximo()
+                        break
+                    elif (tokenizador.atual.tipo == ID_):
+                        children.append(IdVal(tokenizador.atual.valor))
+                        tokenizador.selecionarProximo()
+                    elif (tokenizador.atual.tipo == NUM):
+                        children.append(IntVal(tokenizador.atual.valor, None))
+                        tokenizador.selecionarProximo()
+                    if(tokenizador.atual.tipo == COMMA):
+                        tokenizador.selecionarProximo()
+                if (tokenizador.atual.valor is not ';'):
+                    raise ValueError("falta ponto e virgula")
+
+
+        node = FuncCall(id_, children) 
+        return (node)           
 
 
     def analisarComando():
@@ -103,12 +141,28 @@ class Analisador:
             node = Analisador.analisarVarDec()
             if (tokenizador.atual.tipo == PV):
                 tokenizador.selecionarProximo()
+        
+        elif (tokenizador.atual.tipo == RETURN):
+            node = Analisador.analisarReturn()
+            if (tokenizador.atual.tipo == PV):
+                tokenizador.selecionarProximo()
+
             
             
 
         return node
     
-    
+    def analisarReturn():
+        tokenizador = Analisador.tokenizador
+        child = None
+
+        if (tokenizador.atual.tipo == RETURN):
+            tokenizador.selecionarProximo()
+            child = Analisador.analisarExpressao()
+        node = Return([child])
+        return node
+
+
     def analisarVarDec():
         tokenizador = Analisador.tokenizador
         node = None
@@ -214,7 +268,6 @@ class Analisador:
         return node
 
 
-
     def analisarRel():
         tokenizador = Analisador.tokenizador                
         exp = Analisador.analisarExpressao()
@@ -230,13 +283,17 @@ class Analisador:
     def analisarAtribuicao():
         tokenizador = Analisador.tokenizador
         node = None
+        
 
         if (tokenizador.atual.tipo == ID_):
             symbol = IdVal(tokenizador.atual.valor)
             tokenizador.selecionarProximo()
             if (tokenizador.atual.tipo == EQ):
                 tokenizador.selecionarProximo()
-                node = Eq(symbol, Analisador.analisarExpressao())
+                if(tokenizador.espiarProximo().valor == "("):
+                    node = Eq(symbol, Analisador.analisarFuncCall())
+                else:
+                    node = Eq(symbol, Analisador.analisarExpressao())
 
         return node
 
@@ -287,193 +344,9 @@ class Analisador:
 
 
 
-class Token:
-    def __init__(self, tipo, valor):
-        self.tipo = tipo
-        self.valor = valor
-
-class Tokenizador:
-
-    def __init__(self, codigoFonte):
-        tempCodigo = codigoFonte
-        while(re.search("\/\*.*\*\/", tempCodigo)):
-            tempCodigo = re.sub("\/\*.*\*\/", "", tempCodigo)
-
-        tempCodigo = re.sub("\/\*", "", tempCodigo)
-        print(tempCodigo)
-
-        self.origem = tempCodigo
-        self.posicao = 0
-        self.atual = None
-
-    def selecionarProximo(self):
-        origem = self.origem
-        valor = ""
-
-
-        while(self.posicao < len(origem) and origem[self.posicao] == ' '):
-            self.posicao+=1
-
-        if (self.posicao == len(origem)):
-            valor = ""
-            tipo = EOF
-            self.atual = Token(tipo, valor)
-        else:
-            if(origem[self.posicao].isdigit()):
-                tipo = NUM
-                while(self.posicao < len(origem) and origem[self.posicao].isdigit()):
-                    valor = valor + origem[self.posicao]
-                    self.posicao+=1
-                self.atual = Token(tipo, valor)
-
-            elif(origem[self.posicao] == "+" or origem[self.posicao] == "-" ):
-                tipo = OP
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao+=1
-
-            elif (origem[self.posicao] == "*" or origem[self.posicao] == "/"):
-                tipo = OP2
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == "(" or origem[self.posicao] == ")"):
-                tipo = PAR
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao:self.posicao+2] == "=="):
-                tipo = REL
-                valor = origem[self.posicao:self.posicao+2]
-                self.atual = Token(tipo, valor)
-                self.posicao += 2
-
-            elif (origem[self.posicao] == "="):
-                tipo = EQ
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == "{" or origem[self.posicao] == "}"):
-                tipo = BRA
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == ";"):
-                tipo = PV
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-            
-            elif (origem[self.posicao] == "!"):
-                tipo = NOT
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-            
-            elif (origem[self.posicao] == ","):
-                tipo = COMMA
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == "i" and origem[self.posicao+1] == "f"):
-                tipo = IF
-                valor = origem[self.posicao]+origem[self.posicao+1]
-                self.atual = Token(tipo, valor)
-                self.posicao += 2
-
-            elif (origem[self.posicao:self.posicao+4] == "else"):
-                tipo = ELSE
-                valor = origem[self.posicao:self.posicao+4]
-                self.atual = Token(tipo, valor)
-                self.posicao += 4
-
-            elif (origem[self.posicao:self.posicao+4] == "char"):
-                tipo = TYPE
-                valor = origem[self.posicao:self.posicao+4]
-                self.atual = Token(tipo, valor)
-                self.posicao += 4
-
-            elif (origem[self.posicao:self.posicao+4] == "void"):
-                tipo = TYPE
-                valor = origem[self.posicao:self.posicao+4]
-                self.atual = Token(tipo, valor)
-                self.posicao += 4
-
-            elif (origem[self.posicao:self.posicao+3] == "int"):
-                tipo = TYPE
-                valor = origem[self.posicao:self.posicao+3]
-                self.atual = Token(tipo, valor)
-                self.posicao += 3
-
-            elif (origem[self.posicao:self.posicao+4] == "main"):
-                tipo = ID_
-                valor = origem[self.posicao:self.posicao+4]
-                self.atual = Token(tipo, valor)
-                self.posicao += 4
-
-            elif (origem[self.posicao:self.posicao+5] == "scanf"):
-                tipo = SCANF
-                valor = origem[self.posicao:self.posicao+5]
-                self.atual = Token(tipo, valor)
-                self.posicao += 5
-
-            elif (origem[self.posicao:self.posicao+5] == "while"):
-                tipo = WHILE
-                valor = origem[self.posicao:self.posicao+5]
-                self.atual = Token(tipo, valor)
-                self.posicao += 5
-
-            elif (origem[self.posicao:self.posicao+2] == "||"):
-                tipo = BOOL
-                valor = origem[self.posicao:self.posicao+2]
-                self.atual = Token(tipo, valor)
-                self.posicao += 2
-
-            elif (origem[self.posicao:self.posicao+2] == "&&"):
-                tipo = BOOL
-                valor = origem[self.posicao:self.posicao+2]
-                self.atual = Token(tipo, valor)
-                self.posicao += 2
-
-            elif (origem[self.posicao] == "!"):
-                tipo = NOT
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == ">"):
-                tipo = REL
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-
-            elif (origem[self.posicao] == "<"):
-                tipo = REL
-                valor = origem[self.posicao]
-                self.atual = Token(tipo, valor)
-                self.posicao += 1
-                 
-            elif (origem[self.posicao].isalpha()):
-                tipo = ID_
-                valor = origem[self.posicao]
-                self.posicao += 1
-                while (origem[self.posicao].isalpha() or \
-                       origem[self.posicao].isdigit() or \
-                       origem[self.posicao] == "_"):
-                       valor += origem[self.posicao]
-                       self.posicao += 1
-                if (valor == "printf"):
-                    self.atual = Token(PRINTF, valor)
-                else:
-                    self.atual = Token(tipo, valor)
 
 code = open("./input", "r").read()
 code = code.replace("\n","")
 Analisador.inicializarTokenizador(code)
-node = (Analisador.analisarPrograma())
-(node.Evaluate())
+Analisador.analisarFuncDec()
+(Analisador.raiz.Evaluate(SymbolTable(None)))
