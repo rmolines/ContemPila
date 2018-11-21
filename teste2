@@ -1,0 +1,39 @@
+MOV EBX, 5
+MOV [ n_1 ] , EBX ; n := 5
+MOV EBX, 2
+MOV [ i_1 ] , EBX ; i := 2
+MOV EBX, 1
+MOV [ f_1 ] , EBX ; f := 1
+LOOP_34:
+MOV EBX, [ i_1 ]
+PUSH EBX ; empilha i
+MOV EBX, [ n_1 ]
+PUSH EBX ; empilha n
+MOV EBX, 1
+POP EAX
+ADD EAX, EBX
+MOV EBX, EAX
+POP EAX
+CMP EAX, EBX
+CALL bi n o p_ jl
+CMP EBX, F al s e
+JE EXIT_34
+MOV EBX, [ f_1 ]
+PUSH EBX
+MOV EBX, [ i_1 ]
+POP EAX
+IMUL EBX
+MOV EBX, EAX
+MOV [ f_1 ] , EBX
+MOV EBX, [ i_1 ]
+PUSH EBX
+MOV EBX, 1
+POP EAX
+ADD EAX, EBX
+MOV EBX, EAX
+MOV [ i_1 ] , EBX
+JMP LOOP_34
+EXIT_34 :
+MOV EBX, [ f_1 ]
+PUSH EBX
+CALL p r i n t

@@ -1,4 +1,5 @@
 from symboltable import *
+from machinecode import *
 
 class Node:
     value = None
@@ -7,6 +8,7 @@ class Node:
     def __init__(self, value, children):
         self.value = value
         self.children = children
+        self.id_ = IDGenerator.getID()
 
     def Evaluate(self):
         pass
@@ -31,6 +33,25 @@ class BinOp(Node):
 
         return (result, 'int')
 
+    def EvaluateCode(self):
+        self.children[0].EvaluateCode()
+        MCGenerator.code += "PUSH EBX\n"
+        self.children[1].EvaluateCode()
+        MCGenerator.code += "POP EAX\n"
+        
+
+        if self.value == '+':
+            MCGenerator.code += "ADD EAX, EBX\n"
+        elif self.value == '*':
+            MCGenerator.code += "IMUL EBX\n"
+        elif self.value == '/':
+            MCGenerator.code += "IDIV EBX\n"
+        elif self.value == "-":
+            MCGenerator.code += "SUB EAX, EBX\n"
+        
+        MCGenerator.code += "MOV EBX, EAX\n"
+
+
 class RelOp(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
@@ -45,6 +66,22 @@ class RelOp(Node):
             result = exp1<exp2
         elif (self.value == "=="):
             result = exp1==exp2
+        
+        return result
+    
+    def EvaluateCode(self):
+        self.children[0].EvaluateCode()
+        MCGenerator.code += "PUSH EBX\n"
+        self.children[1].EvaluateCode()
+        MCGenerator.code += "POP EAX\n"
+
+        result = False
+        if (self.value == ">"):
+            MCGenerator.code += "CMP EAX, EBX\nCALL binop_jl\nCMP EBX, False\n"
+        elif (self.value == "<"):
+            MCGenerator.code += "CMP EAX, EBX\nCALL binop_jg\nCMP EBX, False\n"
+        elif (self.value == "=="):
+            MCGenerator.code += "CMP EAX, EBX\nCALL binop_je\nCMP EBX, False\n"
         
         return result
             
@@ -91,6 +128,10 @@ class IntVal(Node):
     def Evaluate(self):
         return (int(self.value), 'int')
 
+    def EvaluateCode(self):
+        MCGenerator.code += "MOV EBX, %s\n" % int(self.value)
+
+
 class BoolVal(Node):
     def __init__(self, value, children):
         Node.__init__(self, value, children)
@@ -112,6 +153,9 @@ class IdVal(Node):
 
     def Evaluate(self):
         return SymbolTable.getSymbol(self.value)
+    
+    def EvaluateCode(self):
+        MCGenerator.code += "MOV EBX, [%s]\n" % self.value
 
 class VarDec(Node):
     def __init__(self, tipo, symbol):
@@ -120,6 +164,10 @@ class VarDec(Node):
     def Evaluate(self):
         for i in self.children:
             SymbolTable.setType(self.value, i)
+    
+    def EvaluateCode(self):
+        for i in self.children:
+            MCGenerator.bss += "%s RESD 1\n" % i
     
     def PushSymbol(self, symbol):
         self.children.append(symbol)
@@ -130,6 +178,10 @@ class Printf(Node):
 
     def Evaluate(self):
         print(self.children.Evaluate()[0])
+
+    def EvaluateCode(self):
+        self.children.EvaluateCode()
+        MCGenerator.code += "PUSH EBX\nCALL print\n"
 
 class Scanf(Node):
     def __init__(self, children):
@@ -152,6 +204,22 @@ class If(Node):
             if (self.children[2]):
                 self.children[2].Evaluate()
 
+    def EvaluateCode(self):
+        self.children[0].EvaluateCode()
+        MCGenerator.code += "JE EXIT_%s\n" % self.id_
+
+        self.children[1].EvaluateCode()
+
+        if (self.children[2]):
+            MCGenerator.code += "EXIT_%s\n" % self.id_
+
+            self.children[2].EvaluateCode()
+        else:
+            MCGenerator.code += "EXIT_%s\n" % self.id_
+
+        
+        
+
 class While(Node):
     def __init__(self, children):
         Node.__init__(self, None, children)
@@ -159,7 +227,14 @@ class While(Node):
     def  Evaluate(self):
         while(self.children[0].Evaluate()):
             self.children[1].Evaluate()
-
+    
+    def EvaluateCode(self):
+        MCGenerator.code += "LOOP_%s\n" % self.id_
+        self.children[0].EvaluateCode()
+        MCGenerator.code += "JE EXIT_%s\n" % self.id_
+        self.children[1].EvaluateCode()
+        MCGenerator.code += "JMP LOOP_%s\n" % self.id_
+        MCGenerator.code += "EXIT_%s\n" % self.id_
 
 class Eq(Node):
     def __init__(self, symbol, children):
@@ -173,6 +248,10 @@ class Eq(Node):
         else:
             raise ValueError ('Erro de tipagem')
 
+    def EvaluateCode(self):
+        self.children.EvaluateCode()
+        MCGenerator.code += "MOV [%s], EBX\n" % (self.value.value)
+
 class Commands(Node):
     def __init__(self, children):
         Node.__init__(self, None, children)
@@ -180,3 +259,7 @@ class Commands(Node):
     def Evaluate(self):
         for i in self.children:
             i.Evaluate()
+
+    def EvaluateCode(self):
+        for i in self.children:
+            i.EvaluateCode()

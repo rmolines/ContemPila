@@ -13,4 +13,13 @@ class SymbolTable:
 
     def getType(symbol):
         return SymbolTable.typeTable[symbol]
+    
+class IDGenerator:
+    token_id = 0
+
+    def getID():
+        current_id = IDGenerator.token_id
+        IDGenerator.token_id += 1
+        return current_id
+    
 
