@@ -211,9 +211,14 @@ class If(Node):
         self.children[1].EvaluateCode()
 
         if (self.children[2]):
+            MCGenerator.code += "JE EXIT_%s_2\n" % self.id_
+
             MCGenerator.code += "EXIT_%s\n" % self.id_
 
             self.children[2].EvaluateCode()
+
+            MCGenerator.code += "EXIT_%s_2\n" % self.id_
+
         else:
             MCGenerator.code += "EXIT_%s\n" % self.id_
 
